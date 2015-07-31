@@ -193,7 +193,7 @@ module Authorization
         :context => context,
         :skip_attribute_test => object.nil?,
         :bang => bang}.merge(options)
-      result[:user] = current_user unless result.key?(:user)
+      result[:user] = Authorization.current_user unless result.key?(:user)
       result
     end
 
