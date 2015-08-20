@@ -676,6 +676,14 @@ module Authorization
       object ||= attr_validator.object
       hash_or_attr ||= @attr_hash
       return false unless object
+      if ( Authorization.is_a_association_proxy?(object) &&
+           object.respond_to?(:empty?) )
+        return false if object.empty?
+        object.each do |member|
+          return true if validate?(attr_validator, member, hash_or_attr)
+        end
+        return false
+      end
 
       case hash_or_attr
       when Symbol
