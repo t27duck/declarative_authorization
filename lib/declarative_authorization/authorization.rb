@@ -163,17 +163,14 @@ module Authorization
       #
       # Example: permit!( :edit, :object => user.posts )
       #
-      options_object = options[:object]
-      if Authorization.is_a_association_proxy?(options_object) && options_object.respond_to?(:new)
-        options_object = (Rails.version < "3.0" ? options_object : options_object.where(nil)).new
-        # add a reload to the options[:object] so it removes the newly added element above
-        options[:object].reload unless options[:object].nil?
+      if Authorization.is_a_association_proxy?(options[:object]) && options[:object].respond_to?(:proxy_association)
+        options[:object] = options[:object].proxy_association.initialize_attributes(options[:object].klass.new)
       end
 
-      options[:context] ||= options_object && (
-        options_object.class.respond_to?(:decl_auth_context) ?
-            options_object.class.decl_auth_context :
-            options_object.class.name.tableize.to_sym
+      options[:context] ||= options[:object] && (
+        options[:object].class.respond_to?(:decl_auth_context) ?
+            options[:object].class.decl_auth_context :
+            options[:object].class.name.tableize.to_sym
       ) rescue NoMethodError
       
       user, roles, privileges = user_roles_privleges_from_options(privilege, options)
@@ -182,7 +179,7 @@ module Authorization
 
       # find a authorization rule that matches for at least one of the roles and 
       # at least one of the given privileges
-      attr_validator = AttributeValidator.new(self, user, options_object, privilege, options[:context])
+      attr_validator = AttributeValidator.new(self, user, options[:object], privilege, options[:context])
       rules = matching_auth_rules(roles, privileges, options[:context])
       
       # Test each rule in turn to see whether any one of them is satisfied.
@@ -196,7 +193,7 @@ module Authorization
             "(roles #{roles.inspect}, privileges #{privileges.inspect}, " +
             "context #{options[:context].inspect})."
         else
-          raise AttributeAuthorizationError, "#{privilege} not allowed for #{user.inspect} on #{(options_object || options[:context]).inspect}."
+          raise AttributeAuthorizationError, "#{privilege} not allowed for #{user.inspect} on #{(options[:object] || options[:context]).inspect}."
         end
       else
         false
