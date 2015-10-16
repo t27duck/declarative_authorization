@@ -165,9 +165,7 @@ module Authorization
       else
         options[args[0].is_a?(Symbol) ? :context : :object] = args[0]
       end
-      assert_nothing_raised do
-        Authorization::Engine.instance.permit!(privilege, options)
-      end
+      Authorization::Engine.instance.permit!(privilege, options)
     end
 
     # See should_be_allowed_to
